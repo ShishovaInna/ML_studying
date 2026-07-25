@@ -19,11 +19,11 @@ def split_data(
     random_state: int = 42
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Разделяет датасет на train и validation с стратификацией.
+    Поділяє датасет на train та validation зі стратифікацією.
 
-    :param df: исходный DataFrame
-    :param target_col: название целевой переменной
-    :param test_size: доля validation выборки
+    :param df: вихідний DataFrame 
+    :param target_col: назва цільової змінної 
+    :param test_size: частка validation вибірки
     :param random_state: seed
     :return: train_df, val_df
     """
@@ -42,12 +42,12 @@ def get_input_columns(
     cols_to_drop: List[str]
 ) -> List[str]:
     """
-    Формирует список входных признаков.
+    Формує перелік вхідних ознак. 
 
-    :param df: исходный DataFrame
-    :param target_col: целевая колонка
-    :param cols_to_drop: колонки для удаления
-    :return: список колонок-признаков
+    :param df: вихідний DataFrame 
+    :param target_col: цільова колонка 
+    :param cols_to_drop: колонки для видалення 
+    :return: список колонок-ознаків
     """
     return [
         col for col in df.columns
@@ -61,10 +61,10 @@ def split_features_target(
     target_col: str
 ) -> Tuple[pd.DataFrame, pd.Series]:
     """
-    Делит DataFrame на признаки и target.
+    Поділяє DataFrame на ознаки і target. 
 
-    :param df: DataFrame
-    :param input_cols: список признаков
+    :param df: DataFrame 
+    :param input_cols: перелік ознак 
     :param target_col: target колонка
     :return: X, y
     """
@@ -75,9 +75,9 @@ def get_column_types(
     X: pd.DataFrame
 ) -> Tuple[List[str], List[str]]:
     """
-    Определяет числовые и категориальные колонки.
+    Визначає числові та категоріальні колонки.
 
-    :param X: DataFrame признаков
+    :param X: DataFrame ознак
     :return: numeric_cols, categorical_cols
     """
     numeric_cols = X.select_dtypes(include=np.number).columns.tolist()
@@ -90,10 +90,10 @@ def build_preprocessor(
     categorical_cols: List[str]
 ) -> ColumnTransformer:
     """
-    Создает ColumnTransformer для препроцессинга.
+    Створює ColumnTransformer для препроцессингу.
 
-    :param numeric_cols: числовые колонки
-    :param categorical_cols: категориальные колонки
+    :param numeric_cols: числові колонки
+    :param categorical_cols: категоріальні колонки
     :return: ColumnTransformer
     """
     numeric_transformer = Pipeline([
@@ -120,11 +120,11 @@ def fit_preprocessor(
     X_train: pd.DataFrame
 ) -> ColumnTransformer:
     """
-    Обучает препроцессор.
+    Навчає препроцесор.
 
     :param preprocessor: ColumnTransformer
-    :param X_train: тренировочные данные
-    :return: обученный препроцессор
+    :param X_train: тренувальні дані
+    :return: навчений препроцесор
     """
     preprocessor.fit(X_train)
     return preprocessor
@@ -135,11 +135,11 @@ def transform_data(
     X: pd.DataFrame
 ) -> np.ndarray:
     """
-    Применяет препроцессинг.
+    Застосовує препроцесинг.
 
-    :param preprocessor: обученный препроцессор
-    :param X: входные данные
-    :return: numpy массив признаков
+    :param preprocessor: навчений препроцесор
+    :param X: вхідні дані
+    :return: numpy масив ознак
     """
     return preprocessor.transform(X)
 
@@ -150,7 +150,7 @@ def extract_scaler_encoder(
     """
     Извлекает scaler и encoder из ColumnTransformer.
 
-    :param preprocessor: обученный препроцессор
+    :param preprocessor: навчений препроцесор
     :return: scaler, encoder
     """
     scaler = preprocessor.named_transformers_['num'].named_steps['scaler']
@@ -168,7 +168,7 @@ def preprocess_data(
     OneHotEncoder
 ]:
     """
-    Полный цикл препроцессинга данных.
+    Повний цикл препроцессингу даних.
 
     :param raw_df: исходный DataFrame
     :return:
@@ -187,38 +187,40 @@ def preprocess_data(
     # split
     train_df, val_df = split_data(raw_df, target_col)
 
-    # признаки
+    # ознаки
     input_cols = get_input_columns(raw_df, target_col, cols_to_drop)
 
-    # разделение
+    # розподіл
     X_train_df, y_train = split_features_target(train_df, input_cols, target_col)
     X_val_df, y_val = split_features_target(val_df, input_cols, target_col)
 
-    # типы колонок
+    # типи колонок
     numeric_cols, categorical_cols = get_column_types(X_train_df)
 
     # препроцессор
     preprocessor = build_preprocessor(numeric_cols, categorical_cols)
 
-    # обучение
+    # навчання
     preprocessor = fit_preprocessor(preprocessor, X_train_df)
 
-    # трансформация
+    # трансформація
     X_train = transform_data(preprocessor, X_train_df)
     X_val = transform_data(preprocessor, X_val_df)
 
-    # извлечение scaler и encoder
+    # вилучення scaler та encoder
     scaler, encoder = extract_scaler_encoder(preprocessor)
 
-    return (
-        X_train,
-        y_train,
-        X_val,
-        y_val,
-        input_cols,
-        scaler,
-        encoder
-    )
+    result = {
+        'X_train': X_train,
+        'y_train': y_train,
+        'X_val': X_val,
+        'y_val': y_val,
+        'input_cols': input_cols,
+        'scaler': scaler,
+        'encoder': encoder	
+    }
+
+    return result
 
 
 def predict_and_plot(
