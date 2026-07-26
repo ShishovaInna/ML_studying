@@ -210,17 +210,42 @@ def preprocess_data(
     # вилучення scaler та encoder
     scaler, encoder = extract_scaler_encoder(preprocessor)
 
-    result = {
-        'X_train': X_train,
-        'y_train': y_train,
-        'X_val': X_val,
-        'y_val': y_val,
-        'input_cols': input_cols,
-        'scaler': scaler,
-        'encoder': encoder	
-    }
+    return (
+        X_train,
+        y_train,
+        X_val,
+        y_val,
+        input_cols,
+        scaler,
+        encoder
+    )
 
-    return result
+def preprocess_new_data(
+    new_df: pd.DataFrame,
+    input_cols: List[str],
+    scaler: StandardScaler,
+    encoder: OneHotEncoder
+):
+    """
+    Повний цикл препроцессингу нових даних.
+
+    :param new_df: тестовий DataFrame
+    :return:
+        X_test
+    """
+
+    # розподіл
+    X_test_df = new_df[input_cols]
+    
+    # типи колонок
+    numeric_cols, categorical_cols = get_column_types(X_test_df)
+
+    numeric_scaled = scaler.transform(X_test_df[numeric_cols])
+    categorical_encoded = encoder.transform(X_test_df[categorical_cols])
+   
+    X_test = np.hstack([numeric_scaled, categorical_encoded])
+
+    return X_test
 
 
 def predict_and_plot(
